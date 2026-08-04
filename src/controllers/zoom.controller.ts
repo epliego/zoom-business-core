@@ -1,7 +1,9 @@
 import { Body, Controller, Post, Res, Get, Query } from '@nestjs/common';
+import express from 'express';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiCreatedResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
   ApiOperation,
@@ -10,7 +12,9 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ZoomService } from '../services/zoom.service';
-import { PaquetesEntity } from '../entities/paquetes.entity';
+import { ResponseListadoPaquetesDto } from '../dto/response/response-listado-paquetes.dto';
+import { ResponseEmptyDto } from '../dto/response/response-empty.dto';
+import { RequestCrearPaqueteDto } from '../dto/request/request-crear-paquete.dto';
 
 @ApiTags('zoom')
 @ApiBearerAuth()
@@ -20,7 +24,6 @@ export class ZoomController {
 
   /**
    * API listado de Paquetes
-   * @param parameters
    * @param estado
    * @param response
    */
@@ -32,48 +35,50 @@ export class ZoomController {
   })
   @ApiOkResponse({
     description: 'Listado de Paquetes obtenidos satisfactoriamente',
-    type: PaquetesEntity,
+    type: ResponseListadoPaquetesDto,
   })
   @ApiQuery({ name: 'estado', required: false, type: String })
-  @Get('paquetesLista')
+  @Get('paquetes')
   async listadoPaquetes(
     @Query('estado') estado: string = '',
-    @Res()
-    response: any,
+    @Res() response: express.Response,
   ): Promise<any> {
     return this.zoomService.listadoPaquetesService(estado, response);
   }
 
-  // /**
-  //  * API get value Catalog
-  //  * @param parameters
-  //  * @param response
-  //  */
-  // @ApiOperation({
-  //   summary: 'API get value Catalog',
-  // })
-  // @ApiBadRequestResponse({
-  //   description:
-  //     '<b>Bad Request:</b><br/>' +
-  //     '1.- category must be a string<br/>' +
-  //     '2.- category should not be empty',
-  // })
-  // @ApiInternalServerErrorResponse({
-  //   description: '<b>Error Message:</b> Error in service value Catalog',
-  // })
-  // @ApiOkResponse({
-  //   description: 'Get value Catalog successfully',
-  //   type: ValuesCatalogEntity,
-  // })
-  // @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-  // @Post('values-catalog/value')
-  // async getValueCatalog(
-  //   @Body() parameters: RequestValueCatalogDto,
-  //   @Res() response: any,
-  // ): Promise<any> {
-  //   return this.configurationCalatogService.getValueCatalogService(
-  //     parameters,
-  //     response,
-  //   );
-  // }
+  /**
+   * API Crear Paquete
+   * @param parameters
+   * @param response
+   */
+  @ApiOperation({
+    summary: 'API crear Paquete',
+  })
+  @ApiBadRequestResponse({
+    description:
+      '<b>Bad Request:</b><br/>' +
+      '1.- codigo_guia debe ser una cadena de caracteres<br/>' +
+      '2.- destinatario debe ser una cadena de caracteres<br/>' +
+      '3.- ciudad_destino debe ser una cadena de caracteres<br/>' +
+      '4.- peso_kg debe ser un número que cumpla con las restricciones especificadas<br/>' +
+      '5.- estado debe ser una cadena de caracteres<br/>' +
+      '6.- El Código Guía ya existe<br/>' +
+      '7.- El peso no puede ser menor a 0<br/>' +
+      '8.- estado debe ser REGISTRADO, EN_TRANSITO, ENTREGADO o DEVUELTO',
+  })
+  @ApiInternalServerErrorResponse({
+    description: '<b>Error Message:</b> Error en servicio Crear Paquete',
+  })
+  @ApiCreatedResponse({
+    description: 'Paquete Creado satisfactoriamente',
+    type: ResponseEmptyDto,
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @Post('paquetes')
+  async crearPaquete(
+    @Body() parameters: RequestCrearPaqueteDto,
+    @Res() response: express.Response,
+  ): Promise<any> {
+    return this.zoomService.crearPaqueteService(parameters, response);
+  }
 }
