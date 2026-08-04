@@ -1,4 +1,13 @@
-import { Body, Controller, Post, Res, Get, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Res,
+  Get,
+  Query,
+  Patch,
+  Param,
+} from '@nestjs/common';
 import express from 'express';
 import {
   ApiBadRequestResponse,
@@ -15,6 +24,7 @@ import { ZoomService } from '../services/zoom.service';
 import { ResponseListadoPaquetesDto } from '../dto/response/response-listado-paquetes.dto';
 import { ResponseEmptyDto } from '../dto/response/response-empty.dto';
 import { RequestCrearPaqueteDto } from '../dto/request/request-crear-paquete.dto';
+import { RequestActualizarPaqueteDto } from '../dto/request/request-actualizar-paquete.dto';
 
 @ApiTags('zoom')
 @ApiBearerAuth()
@@ -28,7 +38,7 @@ export class ZoomController {
    * @param response
    */
   @ApiOperation({
-    summary: 'API listado de Paquetes',
+    summary: 'API Listado de Paquetes',
   })
   @ApiInternalServerErrorResponse({
     description: '<b>Error Message:</b> Error en servicio Listado de Paquetes',
@@ -52,7 +62,7 @@ export class ZoomController {
    * @param response
    */
   @ApiOperation({
-    summary: 'API crear Paquete',
+    summary: 'API Crear Paquete',
   })
   @ApiBadRequestResponse({
     description:
@@ -80,5 +90,38 @@ export class ZoomController {
     @Res() response: express.Response,
   ): Promise<any> {
     return this.zoomService.crearPaqueteService(parameters, response);
+  }
+
+  /**
+   * API Actualizar Paquete
+   * @param id
+   * @param parameters
+   * @param response
+   */
+  @ApiOperation({
+    summary: 'API Actualizar Paquete',
+  })
+  @ApiBadRequestResponse({
+    description:
+      '<b>Bad Request:</b><br/>' +
+      '1.- estado debe ser una cadena de caracteres<br/>' +
+      '2.- estado debe ser REGISTRADO, EN_TRANSITO, ENTREGADO o DEVUELTO<br/>' +
+      '3.- ID del Paquete no fue encontrado',
+  })
+  @ApiInternalServerErrorResponse({
+    description: '<b>Error Message:</b> Error en servicio Actualizar Paquete',
+  })
+  @ApiCreatedResponse({
+    description: 'Paquete Actualizado satisfactoriamente',
+    type: ResponseEmptyDto,
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @Patch('paquetes/:id/estado')
+  async actualizarPaquete(
+    @Param('id') id: number,
+    @Body() parameters: RequestActualizarPaqueteDto,
+    @Res() response: express.Response,
+  ): Promise<any> {
+    return this.zoomService.actualizarPaqueteService(id, parameters, response);
   }
 }

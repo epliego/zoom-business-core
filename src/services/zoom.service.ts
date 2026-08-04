@@ -4,6 +4,7 @@ import express from 'express';
 import { Repository } from 'typeorm';
 import { PaquetesEntity } from '../entities/paquetes.entity';
 import { RequestCrearPaqueteDto } from '../dto/request/request-crear-paquete.dto';
+import { RequestActualizarPaqueteDto } from '../dto/request/request-actualizar-paquete.dto';
 import { DateTime } from 'luxon';
 
 @Injectable()
@@ -14,7 +15,7 @@ export class ZoomService {
   ) {}
 
   /**
-   * Función listado de Paquetes
+   * Función Listado de Paquetes
    * @param estado
    * @param response
    */
@@ -69,7 +70,7 @@ export class ZoomService {
   }
 
   /**
-   * Función listado de Paquetes
+   * Función Crear Paquete
    * @param parameters
    * @param response
    */
@@ -124,8 +125,75 @@ export class ZoomService {
         await this.paquetesRepository.save(new_paquete);
 
         response.status(HttpStatus.CREATED).json({
-          statusCode: 200,
+          statusCode: 201,
           message: 'Paquete Creado satisfactoriamente',
+          data: [],
+        });
+      }
+    } catch (err) {
+      console.error(err);
+
+      const error_message =
+        err instanceof Error ? err.message : 'Unexpected error';
+
+      response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        statusCode: 500,
+        message: 'Error en servicio Crear Paquete',
+        errors: [error_message],
+      });
+    }
+  }
+
+  /**
+   * Función Actualizar Paquete
+   * @param id
+   * @param parameters
+   * @param response
+   */
+  async actualizarPaqueteService(
+    id: number,
+    parameters: RequestActualizarPaqueteDto,
+    @Res() response: express.Response,
+  ): Promise<any> {
+    try {
+      const array_errors: any[] = [];
+
+      if (
+        parameters.estado.trim().toUpperCase() !== 'REGISTRADO' &&
+        parameters.estado.trim().toUpperCase() !== 'EN_TRANSITO' &&
+        parameters.estado.trim().toUpperCase() !== 'ENTREGADO' &&
+        parameters.estado.trim().toUpperCase() !== 'DEVUELTO'
+      ) {
+        array_errors.push(
+          'estado debe ser REGISTRADO, EN_TRANSITO, ENTREGADO o DEVUELTO',
+        );
+      }
+
+      const json_paquete = await this.paquetesRepository.findOne({
+        where: {
+          id: id,
+        },
+      });
+
+      if (!json_paquete) {
+        array_errors.push('ID del Paquete no fue encontrado');
+      }
+
+      if (array_errors.length > 0) {
+        response.status(HttpStatus.BAD_REQUEST).json({
+          statusCode: 400,
+          message: 'Petición mal hecha',
+          errors: array_errors,
+        });
+      } else {
+        json_paquete!.estado = parameters.estado.trim().toUpperCase();
+        json_paquete!.actualizado_en = new Date();
+
+        await this.paquetesRepository.save(json_paquete!);
+
+        response.status(HttpStatus.CREATED).json({
+          statusCode: 200,
+          message: 'Paquete Actualizado satisfactoriamente',
           data: [],
         });
       }
